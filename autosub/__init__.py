@@ -26,7 +26,7 @@ from googleapiclient.discovery import build
 from progressbar import ProgressBar, Percentage, Bar, ETA
 
 from autosub.constants import (
-    LANGUAGE_CODES, GOOGLE_SPEECH_API_KEY, GOOGLE_SPEECH_API_URL,
+    LANGUAGE_CODES, GOOGLE_SPEECH_API_KEY, GOOGLE_SPEECH_API_URL, BAIDU_APIKEY, BAIDU_SKEY, BAIDU_TOKEN
 )
 from autosub.formatters import FORMATTERS
 
@@ -65,9 +65,10 @@ class FLACConverter(object): # pylint: disable=too-few-public-methods
             start, end = region
             start = max(0, start - self.include_before)
             end += self.include_after
-            temp = tempfile.NamedTemporaryFile(suffix='.flac', delete=False)
+            temp = tempfile.NamedTemporaryFile(suffix='.pcm', delete=False)
             command = ["ffmpeg", "-ss", str(start), "-t", str(end - start),
-                       "-y", "-i", self.source_path,
+                       "-y", "-i", self.source_path, 
+                       "-acodec", "pcm_s16le", "-f", "s16le",
                        "-loglevel", "error", temp.name]
             use_shell = True if os.name == "nt" else False
             subprocess.check_output(command, stdin=open(os.devnull), shell=use_shell)
@@ -79,39 +80,46 @@ class FLACConverter(object): # pylint: disable=too-few-public-methods
         except KeyboardInterrupt:
             return None
 
-
 class SpeechRecognizer(object): # pylint: disable=too-few-public-methods
     """
     Class for performing speech-to-text for an input FLAC file.
     """
-    def __init__(self, language="en", rate=44100, retries=3, api_key=GOOGLE_SPEECH_API_KEY):
+    def __init__(self, language="zh-CN", rate=44100, retries=3):
         self.language = language
         self.rate = rate
-        self.api_key = api_key
         self.retries = retries
+        if BAIDU_TOKEN != "":
+            self.access_token = BAIDU_TOKEN
+        else:
+            self.access_token = self.getAccessToken()
+
+    def getAccessToken(self):
+        url = "https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id={}&client_secret={}".format(
+            BAIDU_APIKEY, BAIDU_SKEY)
+        try:
+            resp = requests.get(url)
+        except requests.exceptions.ConnectionError:
+            return None
+        return resp.json()["access_token"]
+
 
     def __call__(self, data):
         try:
             for _ in range(self.retries):
-                url = GOOGLE_SPEECH_API_URL.format(lang=self.language, key=self.api_key)
-                headers = {"Content-Type": "audio/x-flac; rate=%d" % self.rate}
-
+                url = "http://vop.baidu.com/server_api?cuid={}&token={}".format(
+                    1111, self.access_token
+                )
+                headers = {"Content-Type": "audio/pcm;rate=16000", "Content-Length": str(len(data))}
                 try:
                     resp = requests.post(url, data=data, headers=headers)
                 except requests.exceptions.ConnectionError:
                     continue
 
-                for line in resp.content.decode('utf-8').split("\n"):
-                    try:
-                        line = json.loads(line)
-                        line = line['result'][0]['alternative'][0]['transcript']
-                        return line[:1].upper() + line[1:]
-                    except IndexError:
-                        # no result
-                        continue
-                    except JSONDecodeError:
-                        continue
-
+                if resp.json()["err_no"] == 0:
+                    return resp.json()['result'][0]
+                else:
+                    continue
+                
         except KeyboardInterrupt:
             return None
 
@@ -244,12 +252,11 @@ def generate_subtitles( # pylint: disable=too-many-locals,too-many-arguments
     """
     audio_filename, audio_rate = extract_audio(source_path)
 
-    regions = find_speech_regions(audio_filename)
+    regions = find_speech_regions(audio_filename, 4096, 0.5, 50)
 
     pool = multiprocessing.Pool(concurrency)
     converter = FLACConverter(source_path=audio_filename)
-    recognizer = SpeechRecognizer(language=src_language, rate=audio_rate,
-                                  api_key=GOOGLE_SPEECH_API_KEY)
+    recognizer = SpeechRecognizer(language=src_language, rate=audio_rate)
 
     transcripts = []
     if regions:
