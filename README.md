@@ -1,6 +1,8 @@
 # Autosub <a href="https://pypi.python.org/pypi/autosub"><img src="https://img.shields.io/pypi/v/autosub.svg"></img></a>
-Fork自: https://github.com/agermanidis/autosub   
-仅将语音识别文字部分中的Google API替换为BAIDU API，方便国内用户     
+autosub 是一个可以为视频生成字幕的命令行工具，支持windows, Mac, Linux系统。
+
+本repo fork自: https://github.com/agermanidis/autosub   
+主要修改了语音识别部分，将其中的Google API替换为Baidu API，方便国内用户使用     
 使用时，请将源语言和目标语言都设置为中文，例如：
 ```
 autosub 1.mp4  -S zh-CN -D zh-CN -C 10 -o 1.srt
