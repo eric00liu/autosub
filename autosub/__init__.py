@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
 Defines autosub's main functionality.
 """
@@ -17,6 +18,7 @@ import tempfile
 import wave
 import json
 import requests
+import qrcode_terminal
 try:
     from json.decoder import JSONDecodeError
 except ImportError:
@@ -401,6 +403,13 @@ def main():
         return 1
 
     try:
+        if BAIDU_APIKEY == '' and BAIDU_SKEY == '' and BAIDU_TOKEN == '':
+            qrcode_terminal.draw("https://u.wechat.com/EKIKepo_1J_khuq9avrjPgE")
+            print("由于没有设置百度开发者key，无法进行语音转字幕")
+            print("扫描以上的二维码加我微信好友，获取临时token，可以使用24小时")
+            print("然后打开autosub/constants.py 将临时token填入到BAIDU_TOKEN中即可")
+            return 1
+
         subtitle_file_path = generate_subtitles(
             source_path=args.source_path,
             concurrency=args.concurrency,

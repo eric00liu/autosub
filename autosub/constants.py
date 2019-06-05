@@ -11,7 +11,7 @@ BAIDU_APIKEY = ""
 BAIDU_SKEY = ""
 
 ### expire time 24 hours
-BAIDU_TOKEN = "24.45004eed8fbab18ad98a0c6d1bf8385c.2592000.1562312809.282335-9468477"
+BAIDU_TOKEN = ""
 
 LANGUAGE_CODES = {
     'af': 'Afrikaans',

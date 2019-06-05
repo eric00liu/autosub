@@ -38,6 +38,7 @@ setup(
         'pysrt>=1.0.1',
         'progressbar2>=3.34.3',
         'six>=1.11.0',
+        'qrcode-terminal>=0.3',
     ],
     license=open("LICENSE").read()
 )

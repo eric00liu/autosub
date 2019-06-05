@@ -1,4 +1,30 @@
 # Autosub <a href="https://pypi.python.org/pypi/autosub"><img src="https://img.shields.io/pypi/v/autosub.svg"></img></a>
+Fork自: https://github.com/agermanidis/autosub   
+仅将语音识别文字部分中的Google API替换为BAIDU API，方便国内用户     
+使用时，请将源语言和目标语言都设置为中文，例如：
+```
+autosub 1.mp4  -S zh-CN -D zh-CN -C 10 -o 1.srt
+```
+
+### 安装
+1. 开通自己的百度开发者账号，打开语音识别API服务，创建自己的apikey和skey https://cloud.baidu.com/doc/SPEECH/index.html  
+2. 如果不方便注册百度开发者账号，可以联系我获取一个临时的token，有效期为24小时。
+![](profile.jpg)
+3. 打开编辑 autosub/constants.py    
+
+```           
+- 填入百度开发者的 BAIDU_APIKEY和BAIDU_SKEY。              
+- 将临时token填入到BAIDU_TOKEN          
+以上二者有其一即可。
+```          
+
+4. Install ffmpeg
+5. python setup.py install
+6. 执行语音转文字
+```
+autosub 1.mp4  -S zh-CN -D zh-CN -C 10 -o 1.srt
+```
+  
   
 ### Auto-generated subtitles for any video
 
